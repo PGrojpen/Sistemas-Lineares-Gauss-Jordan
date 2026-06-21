@@ -15,10 +15,6 @@ da eliminação passo a passo** e classificando o sistema em SPD, SPI ou SI.
   - **SI** — impossível (sem solução)
 - Solução final: os valores das incógnitas (SPD) ou a forma paramétrica (SPI)
 
-## Requisitos
-
-- Python 3 (o Tkinter já vem na instalação padrão)
-
 ## Como usar
 
 ```
