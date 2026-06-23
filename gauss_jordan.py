@@ -1,6 +1,9 @@
+
 # Gauss-Jordan: resolve sistemas lineares guardando cada passo da eliminacao.
 
 EPSILON = 1e-9
+# Acima de 1/EPSILON o inverso do pivo cai abaixo da tolerancia
+LIMITE_VALOR = 1 / EPSILON  # 1e9
 
 
 def eh_zero(x):
@@ -67,21 +70,21 @@ def gauss_jordan(matriz, num_variaveis):
 
         if candidata != linha_pivo:
             trocar_linhas(matriz, linha_pivo, candidata)
-            registrar(f"L{linha_pivo + 1} ↔ L{candidata + 1}",
+            registrar(f"L{linha_pivo + 1} <-> L{candidata + 1}",
                       [linha_pivo, candidata], (linha_pivo, coluna))
 
         pivo = matriz[linha_pivo][coluna]
         if not eh_zero(pivo - 1):
             escala = 1 / pivo
             multiplicar_linha(matriz, linha_pivo, escala)
-            registrar(f"L{linha_pivo + 1} → ({formatar_num(escala)})·L{linha_pivo + 1}",
+            registrar(f"L{linha_pivo + 1} -> ({formatar_num(escala)}) * L{linha_pivo + 1}",
                       [linha_pivo], (linha_pivo, coluna))
 
         for i in range(num_linhas):
             if i != linha_pivo and not eh_zero(matriz[i][coluna]):
                 fator = -matriz[i][coluna]
                 combinar_linhas(matriz, i, linha_pivo, fator)
-                registrar(f"L{i + 1} → L{i + 1} + ({formatar_num(fator)})·L{linha_pivo + 1}",
+                registrar(f"L{i + 1} -> L{i + 1} + ({formatar_num(fator)}) * {linha_pivo + 1}",
                           [i], (linha_pivo, coluna))
 
         linha_pivo += 1

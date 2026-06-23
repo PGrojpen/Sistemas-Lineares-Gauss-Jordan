@@ -6,7 +6,6 @@ from tkinter import ttk, messagebox
 
 from gauss_jordan import gauss_jordan, classificar_sistema, obter_solucao, formatar_num, limpar
 
-# Base neutra (slate) + um unico acento primario (indigo).
 COR_FUNDO    = "#f1f5f9"   # slate-100, fundo geral
 COR_PAINEL   = "#ffffff"
 COR_BORDA    = "#e2e8f0"   # slate-200
@@ -35,14 +34,15 @@ FONTE_TIT    = ("Segoe UI", 18, "bold")
 FONTE_OP     = ("Segoe UI", 13, "bold")
 
 SUBSCRITO = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-
+EPSILON = 1e-9
+LIMITE_VALOR = 1 / EPSILON  # 1e9
 
 def nome_var(i):
     return "x" + str(i + 1).translate(SUBSCRITO)
 
 
 def parse_num(texto):
-    # aceita vazio, virgula decimal e fracoes simples (1/2)
+    # aceita vazio, virgula decimal e fracoes simples
     texto = texto.strip().replace(",", ".")
     if texto == "":
         return 0.0
@@ -134,7 +134,7 @@ class AppGaussJordan:
         head.pack(fill="x")
         tk.Label(head, text="Sistemas Lineares — Método de Gauss-Jordan",
                  font=FONTE_TIT, fg="white", bg=COR_HEADER).pack(anchor="w", padx=20, pady=(14, 0))
-        tk.Label(head, text="Resolução passo a passo, com classificação (SPD / SPI / SI)",
+        tk.Label(head, text="Resolução passo a passo com classificação",
                  font=FONTE_TXT, fg="#cbd5e1", bg=COR_HEADER).pack(anchor="w", padx=20, pady=(0, 14))
 
     def _montar_controles(self):
@@ -151,7 +151,7 @@ class AppGaussJordan:
         self.spin_colunas.set(3)
         self.spin_colunas.pack(side="left", padx=(4, 18))
 
-        self._botao(ctr, "↻  Gerar matriz", self.gerar_grade, COR_NEUTRO).pack(side="left")
+        self._botao(ctr, "Gerar matriz", self.gerar_grade, COR_NEUTRO).pack(side="left")
 
     def _montar_entrada(self):
         tk.Label(self.corpo, text="Matriz aumentada   [ coeficientes  │  resultados ]",
@@ -163,7 +163,8 @@ class AppGaussJordan:
 
         acoes = tk.Frame(self.corpo, bg=COR_FUNDO)
         acoes.pack(fill="x", padx=20, pady=10)
-        self._botao(acoes, "▶  Resolver", self.resolver, COR_PRIM).pack(side="left")
+
+        self._botao(acoes, "> Resolver", self.resolver, COR_PRIM).pack(side="left")
         self._botao(acoes, "Limpar", self.limpar_grade, COR_NEUTRO).pack(side="left", padx=8)
         tk.Label(acoes, text="Aceita inteiros, decimais (0,5) e frações (1/2).",
                  font=("Segoe UI", 9), bg=COR_FUNDO, fg=COR_SUAVE).pack(side="left", padx=10)
@@ -186,27 +187,32 @@ class AppGaussJordan:
         self.lbl_contador = tk.Label(prog, text="", font=FONTE_TXT, bg=COR_FUNDO, fg=COR_SUAVE)
         self.lbl_contador.pack(side="left", padx=12)
 
-        self.frame_matriz = tk.Frame(self.corpo, bg=COR_PAINEL,
+        area = tk.Frame(self.corpo, bg=COR_FUNDO)
+        area.pack(fill="x", padx=20, pady=10)
+
+        self.frame_matriz = tk.Frame(area, bg=COR_PAINEL,
                                      highlightbackground=COR_BORDA, highlightthickness=1)
-        self.frame_matriz.pack(padx=20, pady=10, anchor="w")
+        self.frame_matriz.pack(side="left", anchor="n")
+
+        self.frame_resultado = tk.Frame(area, bg=COR_FUNDO)
+        self.frame_resultado.pack(side="left", anchor="n", fill="both", expand=True, padx=(16, 0))
+        self.lbl_resultado = tk.Label(self.frame_resultado, text="", font=("Consolas", 12),
+                                      bg=COR_FUNDO, fg=COR_TEXTO, justify="left",
+                                      anchor="nw", padx=14, pady=12)
+        self.lbl_resultado.pack(fill="both", expand=True, padx=2, pady=2)
 
         nav = tk.Frame(self.corpo, bg=COR_FUNDO)
-        nav.pack(anchor="w", padx=20, pady=2)
+        nav.pack(anchor="w", padx=20, pady=(2, 20))
         self.btn_inicio = self._botao(nav, "⏮", lambda: self.ir_para(0), COR_NEUTRO)
         self.btn_inicio.pack(side="left", padx=2)
         self.btn_voltar = self._botao(nav, "◀  Voltar", self.anterior, COR_NEUTRO)
         self.btn_voltar.pack(side="left", padx=2)
-        self.btn_proximo = self._botao(nav, "Prosseguir  ▶", self.proximo, COR_PRIM)
+        self.btn_proximo = self._botao(nav, "Prosseguir ->", self.proximo, COR_PRIM)
         self.btn_proximo.pack(side="left", padx=2)
+        self.btn_resultado = self._botao(nav, "Ver resultado", self.ver_resultado, COR_NEUTRO)
+        self.btn_resultado.pack(side="left", padx=2)
         self.btn_fim = self._botao(nav, "⏭", lambda: self.ir_para(len(self.passos) - 1), COR_NEUTRO)
         self.btn_fim.pack(side="left", padx=2)
-
-        self.frame_resultado = tk.Frame(self.corpo, bg=COR_FUNDO)
-        self.frame_resultado.pack(fill="x", padx=20, pady=(10, 20), anchor="w")
-        self.lbl_resultado = tk.Label(self.frame_resultado, text="", font=("Consolas", 12),
-                                      bg=COR_FUNDO, fg=COR_TEXTO, justify="left",
-                                      anchor="w", padx=14, pady=12)
-        self.lbl_resultado.pack(fill="x")
 
         self._atualizar_nav()
 
@@ -291,22 +297,34 @@ class AppGaussJordan:
         for r, linha in enumerate(self.entradas):
             nova = []
             for c, e in enumerate(linha):
+                rotulo = "b" if c == len(linha) - 1 else nome_var(c)
                 try:
-                    nova.append(parse_num(e.get()))
+                    valor = parse_num(e.get())
                 except (ValueError, ZeroDivisionError):
-                    rotulo = "b" if c == len(linha) - 1 else nome_var(c)
                     messagebox.showerror("Entrada inválida",
                                          f"Valor inválido na linha {r + 1}, coluna '{rotulo}': "
                                          f"'{e.get()}'.\nUse números (2, -3, 0.5) ou frações (1/2).")
                     e.focus_set()
                     e.selection_range(0, "end")
                     return
+                grande = abs(valor) > LIMITE_VALOR
+                pequeno = valor != 0.0 and abs(valor) < EPSILON
+                if grande or pequeno:
+                    if grande:
+                        detalhe = (f"O valor inserido excede ±{formatar_num(LIMITE_VALOR)}.\n")
+                    else:
+                        detalhe = (f"O valor inserido é diferente de zero mas menor que {EPSILON:.0e}.\n")
+                    messagebox.showerror("Valor fora do intervalo",
+                                         f"Linha {r + 1}, coluna '{rotulo}':\n{detalhe}")
+                    e.focus_set()
+                    e.selection_range(0, "end")
+                    return
+                nova.append(valor)
             matriz.append(nova)
 
         self.num_variaveis = len(self.entradas[0]) - 1
         self.matriz_original = [linha[:] for linha in matriz]
 
-        # gauss_jordan transforma 'matriz' na RREF e devolve os snapshots
         self.passos = gauss_jordan(matriz, self.num_variaveis)
         self.tipo = classificar_sistema(matriz, self.num_variaveis)
         self.solucao = obter_solucao(matriz, self.num_variaveis, self.tipo)
@@ -314,6 +332,12 @@ class AppGaussJordan:
         self.lbl_sistema.config(text="Sistema:\n" + self._sistema_em_equacoes())
         self.indice = 0
         self.mostrar_passo()
+
+    def ver_resultado(self):
+        if not self.passos:
+            self.resolver()
+        if self.passos:
+            self.ir_para(len(self.passos) - 1)
 
     def _sistema_em_equacoes(self):
         nv = self.num_variaveis
@@ -409,20 +433,20 @@ class AppGaussJordan:
     def _mostrar_resultado(self):
         if self.tipo == "SI":
             cor, tinta = COR_ERRO, "#fff1f2"
-            texto = ("●  Sistema IMPOSSÍVEL (SI)\n"
-                     "   Há uma linha do tipo 0 = k (k ≠ 0): não há solução.")
+            texto = ("--> SISTEMA IMPOSSÍVEL (SI)\n"
+                     "   Há uma linha do tipo 0 = b com b ≠ 0 (ex.: 0 = 5): não há solução.")
         elif self.tipo == "SPD":
             cor, tinta = COR_OK, "#ecfdf5"
             valores = "     ".join(f"{nome_var(i)} = {formatar_num(v)}"
                                    for i, v in enumerate(self.solucao))
-            texto = ("●  Sistema POSSÍVEL e DETERMINADO (SPD)\n"
+            texto = ("--> SISTEMA POSSÍVEL E DETERMINADO (SPD)\n"
                      f"   Solução única:   {valores}")
         else:
             cor, tinta = COR_ALERTA, "#fffbeb"
             livres = sum(1 for s in self.solucao if "livre" in s)
             corpo = "\n".join("   " + s for s in self.solucao)
-            texto = ("●  Sistema POSSÍVEL e INDETERMINADO (SPI)\n"
-                     f"   {livres} variável(is) livre(s) → infinitas soluções\n{corpo}")
+            texto = ("--> SISTEMA POSSÍVEL E INDETERMINADO (SPI)\n"
+                     f"   {livres} variável(is) livre(s), infinitas soluções\n{corpo}")
 
         self.frame_resultado.config(bg=cor)
         self.lbl_resultado.config(text=texto, bg=tinta, fg=COR_TEXTO)
