@@ -218,6 +218,20 @@ class AppGaussJordan:
             messagebox.showerror("Tamanho inválido", "Informe números inteiros.")
             return
 
+        # Validação para valores negativos e zerados
+        if linhas < 1:
+            if linhas == 0:
+                messagebox.showerror("Atenção", "As equações estão zeradas")
+            else:
+                messagebox.showerror("Valor inválido", "A quantidade de equações não pode ser negativa")
+            return
+        if colunas < 1:
+            if colunas == 0:
+                messagebox.showerror("Atenção", "As incógnitas estão zeradas")
+            else:
+                messagebox.showerror("Valor inválido", "A quantidade de incógnitas não pode ser negativa")
+            return
+
         for w in self.frame_entrada.winfo_children():
             w.destroy()
         self.entradas = []
@@ -282,7 +296,7 @@ class AppGaussJordan:
                 except (ValueError, ZeroDivisionError):
                     rotulo = "b" if c == len(linha) - 1 else nome_var(c)
                     messagebox.showerror("Entrada inválida",
-                                         f"Valor inválido na linha {r + 1}, coluna “{rotulo}”: "
+                                         f"Valor inválido na linha {r + 1}, coluna '{rotulo}': "
                                          f"'{e.get()}'.\nUse números (2, -3, 0.5) ou frações (1/2).")
                     e.focus_set()
                     e.selection_range(0, "end")
