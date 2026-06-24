@@ -84,7 +84,7 @@ def gauss_jordan(matriz, num_variaveis):
             if i != linha_pivo and not eh_zero(matriz[i][coluna]):
                 fator = -matriz[i][coluna]
                 combinar_linhas(matriz, i, linha_pivo, fator)
-                registrar(f"L{i + 1} -> L{i + 1} + ({formatar_num(fator)}) * {linha_pivo + 1}",
+                registrar(f"L{i + 1} -> L{i + 1} + ({formatar_num(fator)}) * L{linha_pivo + 1}",
                           [i], (linha_pivo, coluna))
 
         linha_pivo += 1
